@@ -71,10 +71,34 @@ public class WordsServlet extends HttpServlet {
             throws ServletException, IOException {
         
         logInfo(request);
+                    
+        String letters = request.getParameter("letters");
+        System.out.println("Got letters:");
+        System.out.println(letters);
+        ArrayList<String> possibleWords = new ArrayList<String>();             
+        for (int i=0; i<words.size(); i++) {
+            int ok = 1;
+            for (int j=0; j<words.get(i).length(); j++) {
+                if (letters.indexOf(words.get(i).charAt(j)) <0 ) {
+                    ok=0;
+                    break;
+                }
+            }
+            if (ok==1) {
+                possibleWords.add(words.get(i));
+            }
+        }         
+           
+        if (request.getHeader("Accept").contains("text/html")) { //browser request
+            respondHtml(response, possibleWords);
+        } else {
+            respondPlain(response, possibleWords);
+        }
+    }
+    
+    private void respondHtml(HttpServletResponse response, ArrayList<String> possibleWords) throws IOException {
         response.setContentType("text/html;charset=UTF-8");
-        
         try (PrintWriter out = response.getWriter()) {
-            
             out.println("<!DOCTYPE html>");
             out.println("<html>");
             out.println("<head>");
@@ -82,30 +106,23 @@ public class WordsServlet extends HttpServlet {
             out.println("</head>");
             out.println("<body>");
             
-            String letters = request.getParameter("letters");
-            System.out.println("Got letters:");
-            System.out.println(letters);
+            for (int i=0; i<possibleWords.size(); i++) {
+                out.println(possibleWords.get(i)+"<br />");
+            }
             
-            char charArray[] = letters.toCharArray(); 
-            
-            for (int i=0; i<words.size(); i++) {
-                int ok = 1;
-                for (int j=0; j<words.get(i).length(); j++) {
-                    if (letters.indexOf(words.get(i).charAt(j)) <0 ) {
-                        ok=0;
-                        break;
-                    }
-                }
-                if (ok==1) {
-                    out.println(words.get(i)+"<br />");
-                }
-                
-            }         
-           
             out.println("</body>");
             out.println("</html>");
         }
-    }
+    } 
+    
+    private void respondPlain(HttpServletResponse response, ArrayList<String> possibleWords) throws IOException {
+        response.setContentType("text/plain");
+        try (PrintWriter out = response.getWriter()) {
+            for (int i=0; i<possibleWords.size(); i++) {
+                out.println(possibleWords.get(i));
+            }
+        }
+    } 
     
     private void logInfo(HttpServletRequest req) {
         getServletContext().log("Method:" + req.getMethod());
